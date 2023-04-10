@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from multiprocessing import Pool
+from pathos.pools import ProcessPool
 from functools import partial
 from utils import run_singling_out, run_linkability, run_inference, evaluate_evaluators, split_data, \
     most_freq, MEAN, PRIVACY
@@ -22,12 +22,11 @@ def run_singling_out_uni_eval(data_path, res_path, ori_path, control_path, name,
     control_df = pd.read_csv(control_path)
 
     for n_attack in n_attacks:
-        with Pool() as pool:
+        with ProcessPool() as pool:
             evaluators = pool.map(
                 partial(run_singling_out, original_df=ori_df, control_df=control_df, n_attacks=n_attack,
                         mode='univariate'),
                 list(data_map.values()))
-        pool.close()
         df_results = df_results.merge(evaluate_evaluators(indices=list(data_map.keys()) + [MEAN], evaluators=evaluators,
                                                           type_eval=f'singlingout_uni_{n_attack}'), how='left',
                                       on=PRIVACY)
@@ -53,12 +52,11 @@ def run_singling_out_multi_eval(data_path, res_path, ori_path, control_path, nam
     control_df = pd.read_csv(control_path)
     for n_attack in n_attacks:
         for n_col in n_cols:
-            with Pool() as pool:
+            with ProcessPool() as pool:
                 evaluators = pool.map(
                     partial(run_singling_out, original_df=ori_df, control_df=control_df, n_attacks=n_attack,
                             n_cols=n_col, mode='univariate'),
                     list(data_map.values()))
-            pool.close()
             df_results = df_results.merge(
                 evaluate_evaluators(indices=list(data_map.keys()) + [MEAN], evaluators=evaluators,
                                     type_eval=f'singlingout_multi_{n_col}_{n_attack}'), how='left', on=PRIVACY)
@@ -87,12 +85,13 @@ def run_linkability_eval(data_path, res_path, ori_path, control_path, name, n_at
     for n_attack in n_attacks:
         n_attack = control_df.shape[0] if n_attack > control_df.shape[0] else n_attack
         for n_neighbor in n_neighbors:
-            with Pool() as pool:
+            a = run_linkability(list(data_map.values())[0], original_df=ori_df, control_df=control_df, n_attacks=n_attack,
+                            aux_cols=aux_cols, n_neighbors=n_neighbor)
+            with ProcessPool() as pool:
                 evaluators = pool.map(
                     partial(run_linkability, original_df=ori_df, control_df=control_df, n_attacks=n_attack,
                             aux_cols=aux_cols, n_neighbors=n_neighbor),
                     list(data_map.values()))
-            pool.close()
             df_results = df_results.merge(
                 evaluate_evaluators(indices=list(data_map.keys()) + [MEAN], evaluators=evaluators,
                                     type_eval=f'linkability_{n_neighbor}_{n_attack}'), how='left', on=PRIVACY)
@@ -120,7 +119,7 @@ def run_inference_eval(data_path, res_path, ori_path, control_path, name, n_atta
     control_df = pd.read_csv(control_path)
     for n_attack in n_attacks:
         n_attack = control_df.shape[0] if n_attack > control_df.shape[0] else n_attack
-        with Pool() as pool:
+        with ProcessPool() as pool:
             evaluators, worst = zip(*pool.map(
                 partial(run_inference, original_df=ori_df, control_df=control_df, n_attacks=n_attack,
                         save_path=save_fig_path, plot=False), list(data_map.items())))
@@ -137,7 +136,7 @@ def run_inference_eval(data_path, res_path, ori_path, control_path, name, n_atta
 
 def get_aux_columns(table_name):
     aux_cols = None
-    if table_name == 'adult':
+    if table_name == 'adults':
         aux_cols = [['type_employer', 'education', 'hr_per_week', 'capital_loss', 'capital_gain'],
                     ['race', 'sex', 'fnlwgt', 'age', 'country']]
     elif table_name == 'cardio':
@@ -156,7 +155,7 @@ def get_aux_columns(table_name):
                     ['hypertension', 'heart_disease', 'ever_married', 'work_type', 'Residence_type',
                      'avg_glucose_level', 'bmi']]
     elif table_name == 'startup':
-        aux_cols = [['state_code', 'latitude', 'longitude', 'zip_code', 'city', 'founded_at', 'first_funding_at',
+        aux_cols = [['state_code', 'latitude', 'longitude', 'city', 'founded_at', 'first_funding_at',
                      'category_code'],
                     ['closed_at', 'last_funding_at', 'age_first_funding_year', 'age_last_funding_year',
                      'age_first_milestone_year', 'age_last_milestone_year', 'relationships', 'funding_rounds',
@@ -231,7 +230,7 @@ def run_files(original_df_path, control_df_path, synt_path, res_path, **kwargs):
 
 
 def main():
-    table_name = 'german_credit'
+    table_name = 'cardio'
     original_path = f"/home/lovakap/new_space/dataflow/benchmark_datasets/privacy_eval/{table_name}/train/{table_name}_train.csv"
     control_path = f"/home/lovakap/new_space/dataflow/benchmark_datasets/privacy_eval/{table_name}/control/{table_name}_control.csv"
 
