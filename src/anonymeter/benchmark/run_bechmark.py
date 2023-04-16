@@ -7,7 +7,7 @@ from utils import run_singling_out, run_linkability, run_inference, evaluate_eva
 
 
 def run_singling_out_uni_eval(data_path, res_path, ori_path, control_path, name, n_attacks, n_chunks):
-    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=True))}
+    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=False))}
 
     # Run SinglingOut univariate
     indices = list(data_map.keys()) + [MEAN]
@@ -38,7 +38,7 @@ def run_singling_out_uni_eval(data_path, res_path, ori_path, control_path, name,
 
 
 def run_singling_out_multi_eval(data_path, res_path, ori_path, control_path, name, n_attacks, n_cols, n_chunks):
-    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=True))}
+    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=False))}
     # Run SinglingOut multivariate
     indices = list(data_map.keys()) + [MEAN]
     f_name = res_path + f"singlingout_multi_res_{name}.csv"
@@ -68,7 +68,7 @@ def run_singling_out_multi_eval(data_path, res_path, ori_path, control_path, nam
 
 
 def run_linkability_eval(data_path, res_path, ori_path, control_path, name, n_attacks, aux_cols, n_neighbors, n_chunks):
-    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=True))}
+    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=False))}
 
     # Run Linkability
     indices = list(data_map.keys()) + [MEAN]
@@ -103,7 +103,7 @@ def run_linkability_eval(data_path, res_path, ori_path, control_path, name, n_at
 
 
 def run_inference_eval(data_path, res_path, ori_path, control_path, name, n_attacks, n_chunks):
-    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=True))}
+    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=False))}
 
     # Run Inference
     indices = list(data_map.keys()) + [MEAN]
@@ -229,14 +229,13 @@ def run_files(original_df_path, control_df_path, synt_path, res_path, **kwargs):
     results.to_csv(total_res_file, index=False)
 
 
-def main():
-    table_name = 'cardio'
+def eval_table(table_name):
     original_path = f"/home/lovakap/new_space/dataflow/benchmark_datasets/privacy_eval/{table_name}/train/{table_name}_train.csv"
     control_path = f"/home/lovakap/new_space/dataflow/benchmark_datasets/privacy_eval/{table_name}/control/{table_name}_control.csv"
 
     # Synth Path can either be single csv file or can be dir, in case of dir the attacks will be executed on all csvs
     synth_path = f"/home/lovakap/new_space/dataflow/benchmark_datasets/privacy_eval/{table_name}/synth"
-    result_path = f"/home/lovakap/privacy_benchmark/{table_name}2/"
+    result_path = f"/home/lovakap/privacy_benchmark/{table_name}/"
 
     os.makedirs(result_path, exist_ok=True)
 
@@ -254,6 +253,12 @@ def main():
 
     run_files(original_df_path=original_path, control_df_path=control_path, synt_path=synth_path, res_path=result_path,
               **running_args)
+
+
+def main():
+    tables = ['stroke', 'german_credit', 'cardio', 'adults', 'house_sale']
+    for table in tables:
+        eval_table(table)
 
 
 if __name__ == "__main__":
