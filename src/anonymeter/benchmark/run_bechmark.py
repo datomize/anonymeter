@@ -85,8 +85,6 @@ def run_linkability_eval(data_path, res_path, ori_path, control_path, name, n_at
     for n_attack in n_attacks:
         n_attack = control_df.shape[0] if n_attack > control_df.shape[0] else n_attack
         for n_neighbor in n_neighbors:
-            a = run_linkability(list(data_map.values())[0], original_df=ori_df, control_df=control_df, n_attacks=n_attack,
-                            aux_cols=aux_cols, n_neighbors=n_neighbor)
             with ProcessPool() as pool:
                 evaluators = pool.map(
                     partial(run_linkability, original_df=ori_df, control_df=control_df, n_attacks=n_attack,
@@ -241,7 +239,7 @@ def eval_table(table_name):
 
     running_args = {
         'table_name': table_name,
-        'n_chunks': 10,
+        'n_chunks': 1,
         'shuffle': False,  # Shuffle data if n_chunks > 1
         'uni_attacks': [5000],
         'multi_attacks': [100],
