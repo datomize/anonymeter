@@ -16,11 +16,12 @@ COLUMN_LIST = ['privacy_lv', 'risk', 'risk_ci', 'main_attack', 'main_attack_er',
                'control_attack', 'control_attack_er']
 
 
-def run_singling_out(synthetic_df, original_df, control_df, n_attacks, mode='univariate'):
+def run_singling_out(synthetic_df, original_df, control_df, n_attacks, n_cols=1, mode='univariate'):
     evaluator = SinglingOutEvaluator(ori=original_df,
                                      syn=synthetic_df,
                                      control=control_df,
-                                     n_attacks=n_attacks)
+                                     n_attacks=n_attacks,
+                                     n_cols=n_cols)
 
     try:
         evaluator.evaluate(mode=mode)
@@ -110,7 +111,6 @@ def split_data(df, n_chunks, shuffled=False):
         for i in range(n_chunks):
             df_list.append(df.loc[i * batch_size: (i + 1) * batch_size, :].reset_index(drop=True))
     return df_list
-
 
 
 def evaluate_evaluators(indices, evaluators, type_eval):
