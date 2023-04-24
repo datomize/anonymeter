@@ -6,8 +6,8 @@ from utils import run_singling_out, run_linkability, run_inference, evaluate_eva
     most_freq, MEAN, PRIVACY
 
 
-def run_singling_out_uni_eval(data_path, res_path, ori_path, control_path, name, n_attacks, n_chunks):
-    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=False))}
+def run_singling_out_uni_eval(data_path, res_path, ori_path, control_path, name, n_attacks, n_chunks, shuffled):
+    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=shuffled))}
 
     # Run SinglingOut univariate
     indices = list(data_map.keys()) + [MEAN]
@@ -37,8 +37,8 @@ def run_singling_out_uni_eval(data_path, res_path, ori_path, control_path, name,
     return mean
 
 
-def run_singling_out_multi_eval(data_path, res_path, ori_path, control_path, name, n_attacks, n_cols, n_chunks):
-    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=False))}
+def run_singling_out_multi_eval(data_path, res_path, ori_path, control_path, name, n_attacks, n_cols, n_chunks, shuffled):
+    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=shuffled))}
     # Run SinglingOut multivariate
     indices = list(data_map.keys()) + [MEAN]
     f_name = res_path + f"singlingout_multi_res_{name}.csv"
@@ -67,8 +67,8 @@ def run_singling_out_multi_eval(data_path, res_path, ori_path, control_path, nam
     return mean
 
 
-def run_linkability_eval(data_path, res_path, ori_path, control_path, name, n_attacks, aux_cols, n_neighbors, n_chunks):
-    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=False))}
+def run_linkability_eval(data_path, res_path, ori_path, control_path, name, n_attacks, aux_cols, n_neighbors, n_chunks, shuffled):
+    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=shuffled))}
 
     # Run Linkability
     indices = list(data_map.keys()) + [MEAN]
@@ -100,8 +100,8 @@ def run_linkability_eval(data_path, res_path, ori_path, control_path, name, n_at
     return mean
 
 
-def run_inference_eval(data_path, res_path, ori_path, control_path, name, n_attacks, n_chunks):
-    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=False))}
+def run_inference_eval(data_path, res_path, ori_path, control_path, name, n_attacks, n_chunks, shuffled):
+    data_map = {f'dat_{name}_{i}': v for i, v in enumerate(split_data(pd.read_csv(data_path), n_chunks, shuffled=shuffled))}
 
     # Run Inference
     indices = list(data_map.keys()) + [MEAN]
@@ -189,11 +189,13 @@ def run_files(original_df_path, control_df_path, synt_path, res_path, **kwargs):
 
     uni_attacks = kwargs.get("uni_attacks", [5000])
     n_chunks = kwargs.get("n_chunks", 1)
+    shuffled = kwargs.get("shuffle", False)
     results = results.combine_first(pd.concat([run_singling_out_uni_eval(data_path=p, res_path=res_path, name=n,
                                                                          n_attacks=uni_attacks,
                                                                          ori_path=original_df_path,
                                                                          control_path=control_df_path,
-                                                                         n_chunks=n_chunks) for n, p in
+                                                                         n_chunks=n_chunks,
+                                                                         shuffled=shuffled) for n, p in
                                                files_dict.items()]).reset_index(drop=True))
     results.to_csv(total_res_file, index=False)
 
@@ -201,7 +203,8 @@ def run_files(original_df_path, control_df_path, synt_path, res_path, **kwargs):
     multi_cols = kwargs.get("multi_cols", [2, 3, 4, 5])
     results = results.combine_first(pd.concat(
         [run_singling_out_multi_eval(data_path=p, res_path=res_path, name=n, n_attacks=multi_attacks, n_cols=multi_cols,
-                                     ori_path=original_df_path, control_path=control_df_path, n_chunks=n_chunks)
+                                     ori_path=original_df_path, control_path=control_df_path, n_chunks=n_chunks,
+                                     shuffled=shuffled)
          for n, p in files_dict.items()]).reset_index(drop=True))
     results.to_csv(total_res_file, index=False)
 
@@ -215,14 +218,14 @@ def run_files(original_df_path, control_df_path, synt_path, res_path, **kwargs):
                                                                         n_neighbors=linkability_neighbors,
                                                                         ori_path=original_df_path,
                                                                         control_path=control_df_path,
-                                                                        n_chunks=n_chunks) for n, p in
+                                                                        n_chunks=n_chunks, shuffled=shuffled) for n, p in
                                                    files_dict.items()]).reset_index(drop=True))
         results.to_csv(total_res_file, index=False)
 
     inference_attacks = kwargs.get("inference_attacks", [5000])
     results = results.combine_first(pd.concat(
         [run_inference_eval(data_path=p, res_path=res_path, name=n, n_attacks=inference_attacks,
-                            ori_path=original_df_path, control_path=control_df_path, n_chunks=n_chunks) for n, p in
+                            ori_path=original_df_path, control_path=control_df_path, n_chunks=n_chunks, shuffled=shuffled) for n, p in
          files_dict.items()]).reset_index(drop=True))
     results.to_csv(total_res_file, index=False)
 
